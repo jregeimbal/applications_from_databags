@@ -76,11 +76,12 @@ node["applications_from_databags"].split(",").each do |project|
 
     if wp_settings then
       symlinks(
-        "uploads" => "wp-content/uploads",
-        "wp-config.php" => "wp-config.php"
+        "uploads" =>  (wp_settings["path"] ? wp_settings["path"] + "/" : "") + "wp-content/uploads",
+        "wp-config.php" => (wp_settings["path"] ? wp_settings["path"] + "/" : "") + "wp-config.php"
       )
       wordpress do
         local_settings_file   "wp-config.php"
+        # local_settings_file   settings_env == "development" ? "wp-config-local.php" : "wp-config.php"
         database do
           db_name       wp_settings["name"] || db_settings["name"]
           db_user       wp_settings["user"] || db_settings["user"]
@@ -104,9 +105,9 @@ node["applications_from_databags"].split(",").each do |project|
           wp_siteurl        wp_settings["wp_siteurl"]   
           display_errors    wp_settings["display_errors"] 
           wp_debug_display  wp_settings["wp_debug_display"] 
-          savequeries    wp_settings["savequeries"] 
-          wp_debug  wp_settings["wp_debug"]
-          wp_content_dir    app_settings["path"] + '/current/wp-content'
+          savequeries       wp_settings["savequeries"] 
+          wp_debug          wp_settings["wp_debug"]
+          wp_content_dir    vhost_settings['docroot']
           wp_content_url    '/wp-content'
         end
       end
