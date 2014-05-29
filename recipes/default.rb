@@ -14,7 +14,7 @@ settings_env = Chef::Config[:solo] ? "development" : node.chef_environment
 node["applications_from_databags"].split(",").each do |project|
 
   # Grab the settings from the "applications::[project]" data bag
-  settings = data_bag_item('applications', project)
+  settings = (node["applications"] && node["applications"][project]) ? node["applications"][project] : data_bag_item('applications', project)
   
   defaults = settings['default']
 
@@ -48,10 +48,6 @@ node["applications_from_databags"].split(",").each do |project|
       server_aliases vhost_settings["server_aliases"] if vhost_settings["server_aliases"]
       docroot vhost_settings['docroot'] if vhost_settings['docroot']
     end
-  end
-
-  if yii_settings then
-    include_recipe "yii"
   end
 
   if node["os_user"] then
@@ -134,12 +130,25 @@ node["applications_from_databags"].split(",").each do |project|
 
   if wp_settings then
     # wordpress thing! :
-    directory "wordpress upload directory" do
-      path app_settings['path'] + '/shared/uploads'
+    directory app_settings['path'] + '/shared/uploads' do
+      action :create
+      mode 00775
       owner "www-data"
       group "www-data"
-      mode 00775
+    end
+  end
+
+  if yii_settings then
+    yii_framework yii_settings["version"] || "1.1.14" do
       action :create
+      symlink  yii_settings["symlink"]
+    end
+
+    directory vhost_settings['docroot'] + '/protected/runtime' do
+      action :create
+      mode 00775
+      owner "www-data"
+      group "www-data"
     end
   end
 
